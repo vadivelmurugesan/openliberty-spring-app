@@ -66,8 +66,7 @@ Example Health Check Configuration:
 yaml readinessProbe: httpGet: path: /actuator/health port: 9080 initialDelaySeconds: 10 periodSeconds: 30
 livenessProbe: httpGet: path: /actuator/health port: 9080 initialDelaySeconds: 20 periodSeconds: 30
 
-```---
-
+```
 ## Resources for Development
 
 - **Dev Mode**: Open Liberty provides development mode for faster iterations. Learn more [here](https://openliberty.io/docs/latest/development-mode.html).
