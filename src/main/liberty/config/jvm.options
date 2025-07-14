@@ -1,0 +1,15 @@
+# JVM OPTIONS
+
+# Memory settings
+-Xms512m
+-Xmx1g
+
+# GC (default G1GC is usually fine; do not override unless needed)
+
+# Startup and monitoring
+-XX:+HeapDumpOnOutOfMemoryError
+-XX:HeapDumpPath=/logs
+
+# Optional debug (commented)
+# -XshowSettings:all
+# -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005

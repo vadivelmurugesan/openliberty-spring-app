@@ -1,16 +1,39 @@
-# Compiled class file
+### IntelliJ IDEA ###
+# User-specific config
+.idea/
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/dictionaries/
+.idea/**/vcs.xml
+
+# Sensitive or temporary files
+.idea/**/dataSources/
+.idea/**/dataSources.local.xml
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/**/dataSources.namespaces.xml
+.idea/**/compiler.xml
+.idea/**/uiDesigner.xml
+.idea/**/gradle.xml
+
+# IntelliJ project files
+*.iml
+*.iws
+out/
+
+# Gradle specific
+.gradle/
+build/
+**/build/
+
+# Compiled Java class files
 *.class
 
-# Log file
+# Logs
 *.log
+logs/
 
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
+# JAR and package files
 *.jar
 *.war
 *.nar
@@ -19,6 +42,33 @@
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# Temporary files
+.mtj.tmp/
+
+# JVM crash logs
 hs_err_pid*
 replay_pid*
+
+# Maven output
+target/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# JetBrains run/debug configs or generated files
+.idea/runConfigurations/
+.idea/modules.xml
+*.swp
+
+# Exclude user-relevant environment
+.env
+.env.*
+
+# Lombok generated files
+.lombok
+
+# Java coverage results
+*.exec
+
+### End of .gitignore ###

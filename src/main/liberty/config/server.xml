@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server description="Open Liberty Spring Boot Runtime Server">
+
+    <!-- ===========================================================
+         Enable Open Liberty Features
+         =========================================================== -->
+    <featureManager>
+        <feature>servlet-6.0</feature>
+        <feature>springBoot-3.0</feature>
+    </featureManager>
+
+    <!-- ===========================================================
+         HTTP/HTTPS Port Configuration
+         =========================================================== -->
+    <httpEndpoint id="defaultHttpEndpoint"
+                  host="*"
+                  httpPort="9080"
+                  httpsPort="9443" />
+
+    <!-- ===========================================================
+         Spring Boot Thin Application Reference
+         Will load JAR from /config/dropins/spring/
+         Docker ENV APP_JAR_NAME sets the filename dynamically
+         =========================================================== -->
+    <springBootApplication id="app-name"
+                           location="app-name-${env.APP_VERSION}"
+                           name="app-name" />
+
+    <!-- ===========================================================
+         Default SSL configuration
+         Trusts system-level CA certificates
+         =========================================================== -->
+    <ssl id="defaultSSLConfig" trustDefaultCerts="true"/>
+
+</server>
