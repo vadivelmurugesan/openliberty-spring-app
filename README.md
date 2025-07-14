@@ -41,14 +41,14 @@ This project includes a `Dockerfile` to containerize the application.
 
 ### Build the Docker Image:
 
-```
-bash docker build -t <your-image-name>: .
+```bash
+docker build -t <your-image-name>: .
 ```
 
 ### Run the Docker Container:
 
-```
-bash docker run -p 9080:9080 -p 9443:9443 <your-image-name>:
+```bash
+docker run -p 9080:9080 -p 9443:9443 <your-image-name>:
 ```
 After starting the container, the application will be accessible at the same endpoints as mentioned above.
 
@@ -62,8 +62,9 @@ To deploy the application to Kubernetes:
 
 Example Health Check Configuration:
 
-```
-yaml readinessProbe: httpGet: path: /actuator/health port: 9080 initialDelaySeconds: 10 periodSeconds: 30
+```yaml 
+
+readinessProbe: httpGet: path: /actuator/health port: 9080 initialDelaySeconds: 10 periodSeconds: 30
 livenessProbe: httpGet: path: /actuator/health port: 9080 initialDelaySeconds: 20 periodSeconds: 30
 
 ```
