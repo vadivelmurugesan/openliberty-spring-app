@@ -1,13 +1,12 @@
 # ==============================================================================
 # build.ps1 — Production-grade Docker build and test script
 # ------------------------------------------------------------------------------
-# This script builds a Spring Boot thin JAR Docker image using Open Liberty,
-# tags it dynamically from Maven project metadata, and runs a local test.
+# Builds a Spring Boot thin JAR Docker image using Open Liberty.
 #
 # Prerequisites:
 #   - Java 17+ and Maven installed
 #   - Docker installed and running
-#   - Optional: PowerShell version 5.1 or later
+#   - PowerShell version 5.1 or later
 #
 # Usage:
 #   .\build.ps1
@@ -16,7 +15,7 @@
 # Ensure that the script stops on any error
 $ErrorActionPreference = "Stop"
 
-Write-Host "Starting the build process..." -ForegroundColor Green
+Write-Host "Starting the build and test process..." -ForegroundColor Green
 
 # ------------------------------------------------------------------------------
 # STEP 1: Validate prerequisites (Java, Maven, Docker)
@@ -25,20 +24,26 @@ Write-Host "Validating prerequisites..." -ForegroundColor Yellow
 
 # Check for Java installation
 if (-not (Get-Command java -ErrorAction SilentlyContinue)) {
-    Write-Error "Java is not installed or not in the PATH. Please install Java 17."
+    Write-Error "Java is not installed or not found in the PATH. Please install Java 17."
     exit 1
 } else {
-    $javaVersion = & java -version 2>&1
-    Write-Host "Java is installed: $javaVersion" -ForegroundColor Green
+    try {
+        $javaVersion = & java -version 2>&1 | Out-String
+        Write-Host "Java is installed. Version details:" -ForegroundColor Green
+        Write-Host $javaVersion -ForegroundColor Cyan
+    } catch {
+        Write-Error "Failed to fetch Java version. Ensure it's installed correctly."
+        exit 1
+    }
 }
 
 # Check for Maven or Maven Wrapper
 if (-not ((Test-Path "./mvnw.cmd") -or (Get-Command mvn -ErrorAction SilentlyContinue))) {
-    Write-Error "Maven or Maven wrapper is not available. Please ensure Maven is installed or provide the wrapper."
+    Write-Error "Maven or Maven wrapper is not available. Please install Maven or include the wrapper."
     exit 1
 }
 
-# Check for Docker installation and if daemon is running
+# Check for Docker installation and running daemon
 try {
     docker version | Out-Null
     Write-Host "Docker is installed and running." -ForegroundColor Green
@@ -48,17 +53,16 @@ try {
 }
 
 # ------------------------------------------------------------------------------
-# STEP 2: Extract app metadata from Maven pom.xml
+# STEP 2: Extract application metadata from Maven pom.xml
 # ------------------------------------------------------------------------------
-Write-Host "Extracting app metadata from pom.xml..." -ForegroundColor Yellow
+Write-Host "Extracting application metadata from pom.xml..." -ForegroundColor Yellow
 
-# Extract artifactId and version
-$APP_NAME = & .\mvnw.cmd help:evaluate -Dexpression=project.artifactId -q -DforceStdout
-$APP_VERSION = & .\mvnw.cmd help:evaluate -Dexpression=project.version -q -DforceStdout
-$IMAGE_TAG = "$APP_NAME:$APP_VERSION"
-
-# Validate metadata extraction
-if (-not $APP_NAME -or -not $APP_VERSION) {
+# Extract artifactId and version from pom.xml
+try {
+    $APP_NAME = & .\mvnw.cmd help:evaluate -Dexpression=project.artifactId -q -DforceStdout
+    $APP_VERSION = & .\mvnw.cmd help:evaluate -Dexpression=project.version -q -DforceStdout
+    $IMAGE_TAG = "$($APP_NAME):$($APP_VERSION)"
+} catch {
     Write-Error "Failed to extract app metadata from pom.xml. Please ensure Maven is configured correctly."
     exit 1
 }
@@ -70,7 +74,7 @@ Write-Host "Docker Tag:    $IMAGE_TAG" -ForegroundColor Green
 # ------------------------------------------------------------------------------
 # STEP 3: Build the Spring Boot JAR using Maven
 # ------------------------------------------------------------------------------
-Write-Host "Building application with Maven..." -ForegroundColor Yellow
+Write-Host "Building the application with Maven..." -ForegroundColor Yellow
 
 if (Test-Path "./mvnw.cmd") {
     & .\mvnw.cmd clean package -DskipTests
@@ -86,24 +90,24 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "Maven build completed successfully." -ForegroundColor Green
 }
 
-# Validate the output artifact
+# Validate the build artifact
 $artifactPath = Get-Item -Path ./target/*.jar -ErrorAction SilentlyContinue
 if (-not $artifactPath) {
-    Write-Error "Build artifact (JAR) was not created. Please check the Maven build logs."
+    Write-Error "Build artifact (JAR) was not created. Check the Maven build logs."
     exit 1
 }
 
 Write-Host "Build artifact created: $($artifactPath.Name)" -ForegroundColor Green
 
 # ------------------------------------------------------------------------------
-# STEP 4: Build the Docker image with dynamic app name and version
+# STEP 4: Build the Docker image
 # ------------------------------------------------------------------------------
-Write-Host "Building Docker image..." -ForegroundColor Yellow
+Write-Host "Building the Docker image..." -ForegroundColor Yellow
 
 docker build `
   --build-arg APP_NAME=$APP_NAME `
   --build-arg APP_VERSION=$APP_VERSION `
-  -t $IMAGE_TAG .
+  -t "$IMAGE_TAG" .
 
 # Check Docker build result
 if ($LASTEXITCODE -ne 0) {
@@ -114,14 +118,14 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # ------------------------------------------------------------------------------
-# STEP 5: Run the container locally for testing
+# STEP 5: Test the Docker container
 # ------------------------------------------------------------------------------
-Write-Host "Starting Docker container for local testing..." -ForegroundColor Yellow
+Write-Host "Starting the Docker container for testing..." -ForegroundColor Yellow
 
-docker run -d --name $APP_NAME -p 9080:9080 $IMAGE_TAG
+docker run -d --name $APP_NAME -p 9080:9080 "$IMAGE_TAG"
 
-# Wait until the container is healthy
-Write-Host "Waiting for app to initialize..." -ForegroundColor Yellow
+# Wait for the container to initialize and check its health
+Write-Host "Waiting for the application to initialize..." -ForegroundColor Yellow
 $maxRetries = 10
 $retryCount = 0
 $isHealthy = $false
@@ -139,18 +143,18 @@ while (-not $isHealthy -and $retryCount -lt $maxRetries) {
 }
 
 if (-not $isHealthy) {
-    Write-Error "Health check failed after multiple attempts. Aborting script."
+    Write-Error "Health check failed after multiple attempts. Stopping script."
     docker stop $APP_NAME | Out-Null
     docker rm $APP_NAME | Out-Null
     exit 1
 }
 
-Write-Host "Container is healthy and running." -ForegroundColor Green
+Write-Host "The container is healthy and running." -ForegroundColor Green
 
 # ------------------------------------------------------------------------------
-# STEP 6: Cleanup container after test
+# STEP 6: Cleanup resources
 # ------------------------------------------------------------------------------
-Write-Host "Cleaning up test container..." -ForegroundColor Yellow
+Write-Host "Cleaning up the test container and resources..." -ForegroundColor Yellow
 
 docker stop $APP_NAME | Out-Null
 docker rm $APP_NAME | Out-Null
